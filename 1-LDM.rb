@@ -1,7 +1,10 @@
 require 'gooddata'
 require 'yaml'
+require 'facets/string/interpolate'
 
-GoodData.with_connection do |client|
+credential = YAML.load(String.interpolate { File.read('credential.yml') })
+
+GoodData.with_connection(credential) do |client|
   blueprint = GoodData::Model::ProjectBlueprint.build("Jira Insight #{Time.now.to_i}") do |p|
     p.add_date_dimension("resolved_date", :title => "Resolved Date")
     p.add_date_dimension("updated_date", :title => "Updated Date")
@@ -28,7 +31,7 @@ GoodData.with_connection do |client|
       d.add_attribute("attr.issue.epic_link", :title => "Epic Link")
       d.add_label("label.issue.epic_link", :reference => "attr.issue.epic_link", :title => "Epic Link")
 
-      d.add_reference("fact.commit.priority_weight", :dataset => "dataset.priority")
+      d.add_fact("fact.issue.priority_weight", :title => "Priority Weight")
 
       d.add_date("resolved_date",  :dataset => "resolved_date")
       d.add_date("updated_date",  :dataset => "updated_date")
@@ -57,6 +60,8 @@ GoodData.with_connection do |client|
       d.add_attribute("attr.issue_links.target_issue", :title => "Target Issue")
       d.add_label("label.issue_links.target_issue", :reference => "attr.issue_links.target_issue", :title => "Target Issue")
 
+      d.add_fact("fact.issue_links.priority_weight", :title => "Target Issue Priority Weight")
+
       d.add_reference("attr.issue.id", :dataset => "dataset.issue")
     end
 
@@ -69,17 +74,17 @@ GoodData.with_connection do |client|
       d.add_reference("attr.issue.id", :dataset => "dataset.issue")
     end
 
-    # Priority
-    p.add_dataset("dataset.priority") do |d|
-      d.add_anchor("attr.priority", :title => "Priority")
-      d.add_label("label.priority", :reference => "attr.priority", :title => "Priority")
+    # # Priority
+    # p.add_dataset("dataset.priority") do |d|
+    #   d.add_anchor("attr.priority", :title => "Priority")
+    #   d.add_label("label.priority", :reference => "attr.priority", :title => "Priority")
 
-      d.add_fact("fact.commit.priority_weight", :title => "Priority Weight")
-    end
+    #   d.add_fact("fact.commit.priority_weight", :title => "Priority Weight")
+    # end
 
   end
 
-  project = GoodData::Project.create_from_blueprint(blueprint)
+  project = GoodData::Project.create_from_blueprint(blueprint, auth_token: credential['auth_token'])
   puts "Created project #{project.pid}"
-  File.open("project_id", "wb").write(project.pid)
+  File.open("project_id.txt", "wb").write(project.pid)
 end

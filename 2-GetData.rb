@@ -6,11 +6,13 @@ require 'date'
 require 'yaml'
 require 'jira'
 
-credential = YAML.load_file 'credential.yml'
+jira_user = "#{ENV['JIRA_USER']}"
+jira_password = "#{ENV['JIRA_SECRET']}"
 jirahost = 'https://jira.intgdc.com/rest/api/2'
+
 options = {
-            :username => credential['jira_user'],
-            :password => credential['jira_password'],
+            :username => jira_user,
+            :password => jira_password,
             :site     => jirahost,
             :context_path => '',
             :auth_type => :basic,
@@ -36,6 +38,7 @@ issue_fields = ['id', 'key', 'issuetype', 'status', 'project', 'summary', 'key',
                 'resolutiondate', 'updated', 'created' , 'issuelinks', 'components', 'fixVersions']
 
 exclude_projects = []
+allowed_projects = ['PB']
 
 date_format = '%m/%d/%Y'
 max_results = 500
@@ -46,11 +49,11 @@ FileUtils::mkdir_p 'csv'
 
 CSV.open("csv/issue.csv", "wb") do |csv_issues|
   csv_issues << ['label.issue.id', 'label.issue.key', 'label.issue.type', 'label.issue.status', 'label.issue.project',
-                 'label.issue.summary', 'label.issue.epic_link', 'dataset.priority', 'created_date', 'updated_date', 'resolved_date']
+                 'label.issue.summary', 'label.issue.epic_link', 'fact.issue.priority_weight', 'created_date', 'updated_date', 'resolved_date']
 end
 
 CSV.open("csv/issue_link.csv", "wb") do |csv_issues|
-  csv_issues << ['label.issue_links.id', 'label.issue_links.type', 'dataset.issue', 'label.issue_links.target_issue']
+  csv_issues << ['label.issue_links.id', 'label.issue_links.type', 'dataset.issue', 'label.issue_links.target_issue', 'fact.issue_links.priority_weight']
 end
 
 CSV.open("csv/component.csv", "wb") do |csv_issues|
@@ -64,6 +67,7 @@ end
 
 projects.each do |project|
   next if exclude_projects.include? project[1]
+  next unless allowed_projects.include? project[1]
   number_of_results = max_results
   start_at = 0
 
@@ -78,7 +82,7 @@ projects.each do |project|
 
       CSV.open("csv/issue.csv", "ab") do |csv_issues|
         resolutiondate = issue.resolutiondate.to_date.strftime(date_format) if issue.resolutiondate
-        issue_priority_name = issue.priority.name if issue.priority
+        issue_priority_name = issue.priority.id if issue.priority
         csv_issues << [issue.id, issue.key, issue.issuetype.name, issue.status.name, project[1], issue.summary,
                        issue.customfield_12002, issue_priority_name, issue.created.to_date.strftime(date_format),
                        issue.updated.to_date.strftime(date_format), resolutiondate]
@@ -87,9 +91,13 @@ projects.each do |project|
       CSV.open("csv/issue_link.csv", "ab") do |csv_issue_link|
         issue.issuelinks.each do |issuelink|
           if not issuelink.outwardIssue
-            csv_issue_link << ["#{issuelink.inwardIssue.id}-inward", issuelink.type.name, issue.id, issuelink.inwardIssue.key]
+            #target_issue = jira_client.Issue.jql("issuekey=#{issuelink.inwardIssue.id}", options = {fields: ['priority']})
+            #target_issue_weight = target_issue[0].priority.id if target_issue[0].priority
+            csv_issue_link << ["#{issuelink.inwardIssue.id}-inward", issuelink.type.name, issue.id, issuelink.inwardIssue.key, nil]
           else
-            csv_issue_link << ["#{issuelink.outwardIssue.id}-outward", issuelink.type.name, issue.id, issuelink.outwardIssue.key]
+            #target_issue = jira_client.Issue.jql("issuekey=#{issuelink.outwardIssue.id}", options = {fields: ['priority']})
+            #target_issue_weight = target_issue[0].priority.id if target_issue[0].priority
+            csv_issue_link << ["#{issuelink.outwardIssue.id}-outward", issuelink.type.name, issue.id, issuelink.outwardIssue.key, nil]
           end
         end
       end
@@ -107,5 +115,5 @@ projects.each do |project|
       end
     end
   end
-  sleep 3
+  sleep 1
 end
