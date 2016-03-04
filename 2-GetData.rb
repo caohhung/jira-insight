@@ -6,11 +6,13 @@ require 'date'
 require 'yaml'
 require 'jira'
 
-credential = YAML.load_file 'credential.yml'
+jira_user = "#{ENV['JIRA_USER']}"
+jira_password = "#{ENV['JIRA_SECRET']}"
 jirahost = 'https://jira.intgdc.com/rest/api/2'
+
 options = {
-            :username => credential['jira_user'],
-            :password => credential['jira_password'],
+            :username => jira_user,
+            :password => jira_password,
             :site     => jirahost,
             :context_path => '',
             :auth_type => :basic,

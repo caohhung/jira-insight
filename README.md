@@ -7,11 +7,15 @@
  - gooddata
 ```
 
-### Important variables:
+### Important environment variables:
 
 ```
- - credential.yml => jira_user: USERNAME
- - credential.yml => jira_password: PASSWORDS
+ - JIRA_USER
+ - JIRA_SECRET
+ - GOODDATA_USER
+ - GOODDATA_PASSWORD
+ - GOODDATA_HOST
+ - PROJECT_GROUP
 ```
 
 ### How to connect to Gooddata using Gooddata ruby

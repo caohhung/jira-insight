@@ -1,9 +1,11 @@
 require 'gooddata'
 require 'yaml'
+require 'facets/string/interpolate'
 
-project_id = File.open("project_id", "rb").read()
+credential = YAML.load(String.interpolate { File.read('credential.yml') })
+project_id = File.open("project_id.txt", "rb").read()
 
-GoodData.with_connection do |client|
+GoodData.with_connection(credential) do |client|
   project = GoodData.use(project_id)
   blueprint = project.blueprint
 

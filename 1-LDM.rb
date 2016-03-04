@@ -1,7 +1,10 @@
 require 'gooddata'
 require 'yaml'
+require 'facets/string/interpolate'
 
-GoodData.with_connection do |client|
+credential = YAML.load(String.interpolate { File.read('credential.yml') })
+
+GoodData.with_connection(credential) do |client|
   blueprint = GoodData::Model::ProjectBlueprint.build("Jira Insight #{Time.now.to_i}") do |p|
     p.add_date_dimension("resolved_date", :title => "Resolved Date")
     p.add_date_dimension("updated_date", :title => "Updated Date")
@@ -79,7 +82,6 @@ GoodData.with_connection do |client|
 
   end
 
-  project = GoodData::Project.create_from_blueprint(blueprint)
-  puts "Created project #{project.pid}"
-  File.open("project_id", "wb").write(project.pid)
+  project = GoodData::Project.create_from_blueprint(blueprint, auth_token: credential['auth_token'])
+  File.open("project_id.txt", "wb").write(project.pid)
 end
