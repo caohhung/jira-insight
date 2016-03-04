@@ -14,7 +14,7 @@ options = {
             :site     => jirahost,
             :context_path => '',
             :auth_type => :basic,
-            :read_timeout => 3600,
+            :read_timeout => 120,
             :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE
           }
 
@@ -31,7 +31,6 @@ def get_jira_project_list(jira_client)
 end
 
 
-
 jira_client = new_jira_client(options)
 issue_fields = ['id', 'key', 'issuetype', 'status', 'project', 'summary', 'key', 'customfield_12002', 'priority',
                 'resolutiondate', 'updated', 'created' , 'issuelinks', 'components', 'fixVersions']
@@ -42,6 +41,7 @@ date_format = '%m/%d/%Y'
 max_results = 500
 next_jql_page = true
 projects = get_jira_project_list(jira_client)
+FileUtils::mkdir_p 'csv'
 
 
 CSV.open("csv/issue.csv", "wb") do |csv_issues|

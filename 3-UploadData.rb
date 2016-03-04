@@ -1,8 +1,10 @@
 require 'gooddata'
 require 'yaml'
 
+project_id = File.open("project_id", "rb").read()
+
 GoodData.with_connection do |client|
-  project = GoodData.use('PROJECT_ID')
+  project = GoodData.use(project_id)
   blueprint = project.blueprint
 
   GoodData::Model.upload_data("csv/issue.csv", blueprint, "dataset.issue")

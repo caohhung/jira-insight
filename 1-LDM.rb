@@ -81,4 +81,5 @@ GoodData.with_connection do |client|
 
   project = GoodData::Project.create_from_blueprint(blueprint)
   puts "Created project #{project.pid}"
+  File.open("project_id", "wb").write(project.pid)
 end
